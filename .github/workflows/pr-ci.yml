@@ -9,8 +9,10 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [backend, frontend]
 
     steps:
       - name: Checkout code
@@ -22,10 +24,25 @@ jobs:
           sdk: stable
 
       - name: Install dependencies
-        run: dart pub get
+        run: |
+          if [ "${{ matrix.project }}" = "frontend" ]; then
+            flutter pub get --directory=${{ matrix.project }}
+          else
+            dart pub get --directory=${{ matrix.project }}
+          fi
 
       - name: Run static analysis
-        run: dart analyze
+        run: |
+          if [ "${{ matrix.project }}" = "frontend" ]; then
+            flutter analyze ${{ matrix.project }}
+          else
+            dart analyze ${{ matrix.project }}
+          fi
 
       - name: Run tests
-        run: dart test
+        run: |
+          if [ "${{ matrix.project }}" = "frontend" ]; then
+            flutter test ${{ matrix.project }}
+          else
+            dart test ${{ matrix.project }}
+          fi
