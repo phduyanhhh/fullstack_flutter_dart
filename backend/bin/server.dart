@@ -65,11 +65,39 @@ Response _checkHandler(Request req) {
 void main(List<String> args) async {
   final ip = InternetAddress.anyIPv4;
 
+  final corsHeaders = createMiddleware(
+    requestHandler: (req) {
+      if (req.method == 'OPTIONS') {
+        return Response.ok(
+          '',
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods':
+                'GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        );
+      }
+      return null;
+    },
+    responseHandler: (res) {
+      return res.change(
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods':
+              'GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      );
+    },
+  );
+
   final handler = Pipeline()
+      .addMiddleware(corsHeaders)
       .addMiddleware(logRequests())
       .addHandler(_router.call);
 
   final port = int.parse(Platform.environment['PORT'] ?? '8080');
   final server = await serve(handler, ip, port);
-  print('Server listening on port ${server.port}');
+  print('Server listening on port http://$server.address.host:${server.port}');
 }
